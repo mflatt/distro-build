@@ -475,35 +475,43 @@
                        [(src)
                         racket-src-installers]))]
          [prefix? (if fast-mode '(#f) '(#f #t))]
-         [cs? (if fast-mode '(#t) '(#f #t))]
+         [cs? (if fast-mode '(#t) '(#t #f))]
          [user-scope? (if (or fast-mode (not cs?))
                           (if (eq? src-mode 'slow)
                               '(#f)
                               '(#t))
                           '(#t #f))]
-         ;; specifying a package directory not next to "collects"
-         ;; triggers a fixup step during installation, so check that
-         ;; in a limited set of configurations
-         [alt-pkgs? (if (or (not prefix?)
-                            (not cs?)
-                            (memq mode '(min-src))
-                            user-scope?
-                            (eq? src-mode 'slow))
-                        '(#f)
-                        '(#f #t))])
+         ;; Things to try in a limited set of configurations:
+         ;;  * specifying a package directory not next to "collects"
+         ;;    triggers a fixup step during installation
+         ;;  * natipkg mode triggers an extra installation step to
+         ;;    download native pkgs
+         [extra-mode (if (or (not prefix?)
+                             (not cs?)
+                             user-scope?
+                             (eq? src-mode 'slow))
+                         '(none)
+                         ;; only CS with prefix and installation scope:
+                         (if (memq mode '(min-src))
+                             ;; from non-built minimal source: natipkg
+                             '(none natipkg)
+                             ;; from built or non-minimal sources: alt-pkgs
+                             '(none alt-pkgs)))])
     (define built? (not (or (eq? mode 'min-src) (eq? mode 'src))))
     (define min? (not (or (eq? mode 'src-built) (eq? mode 'src))))
     (define need-base? (and min? (min-needs-base?)))
+    (define alt-pkgs? (eq? extra-mode 'alt-pkgs))
+    (define natipkg? (eq? extra-mode 'natipkg))
     
     (printf (~a "=================================================================\n"
                 "SOURCE: "
                 f
                 (if cs? " CS" " BC")
+                (if natipkg? " natipkg" "")
                 (if prefix? " --prefix" "")
                 (if user-scope? " --user" " --installation")
                 (if alt-pkgs? " --pkgsdir=..." "")
                 "\n"))
-
   
     (#%app
      dynamic-wind
@@ -536,6 +544,9 @@
                                           (if alt-pkgs?
                                               (~a " --pkgsdir=" docker-dir "/pkgs-local")
                                               "")
+                                          (if natipkg?
+                                              (~a " --enable-natipkg --enable-catalog /archive/catalog/")
+                                              "")
                                           (if cs?
                                               " --enable-csdefault"
                                               " --enable-bcdefault"))
@@ -561,6 +572,12 @@
 
        ;; check that `raco setup` is ok --------------------
        (ssh rt (~a bin-dir "raco") " setup")
+
+       ;; for natipkg, check that native libraries are available --------------------
+       (when natipkg?
+         (ssh rt (~a bin-dir "racket")
+              " -l racket/base -l ffi/unsafe -l setup/dirs"
+              " -e '(ffi-lib (build-path (find-lib-dir) \"libcrypto.so.1.1\"))'"))
 
        ;; compile and link an embedding program --------------------
        (scp rt (if cs? embed_cs.c embed_bc.c) (at-docker-remote rt "embed.c"))
