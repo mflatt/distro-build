@@ -6,7 +6,6 @@
          racket/file
          racket/string
          racket/path
-         net/base64
          (only-in distro-build/config
                   current-mode
                   site-config?
@@ -23,7 +22,8 @@
          remote-shell/docker
          (prefix-in remote: remote-shell/ssh)
          "email.rkt"
-         "private/record-using-container.rkt")
+         "private/record-using-container.rkt"
+         "private/pack-base64.rkt")
 
 ;; See "config.rkt" for an overview.
 
@@ -559,10 +559,6 @@
                            (cons (car l) (loop (cdr l) in-quote?))])))
                       "\"\\&\\&\"")]
     [else s]))
-
-(define (pack-base64-strings args)
-  (bytes->string/utf-8 (base64-encode (string->bytes/utf-8 (format "~s" args))
-                                      #"")))
 
 (define build-slash-path
   (case-lambda
