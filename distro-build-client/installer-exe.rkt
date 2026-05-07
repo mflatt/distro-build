@@ -431,6 +431,10 @@ SectionEnd
      (build-path "bundle" "racket" "README.txt")
      (lambda (o)
        (display (regexp-replace* #rx"\n" readme "\r\n") o))))
+  (unless (equal? src-dir "bundle/racket")
+    (when (directory-exists? "bundle/racket")
+      (delete-directory/files "bundle/racket"))
+    (copy-directory/files src-dir "bundle/racket" #:keep-modify-seconds? #t))
   (unless (nsis-generate exe-path
                          human-name
                          (version)

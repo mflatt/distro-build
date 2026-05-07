@@ -189,7 +189,7 @@
 
   (define installer-file
     (if (or source? tgz?)
-        (installer-tgz src-dir source? base-name dir-name dist-suffix readme)
+        (installer-tgz src-dir platform source? base-name dir-name dist-suffix readme)
         (case cross-system-type
           [(unix)
            (installer-sh src-dir platform human-name base-name dir-name release? dist-suffix readme)]

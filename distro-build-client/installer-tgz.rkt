@@ -33,7 +33,7 @@
                            base-name
                            (if source?
                                "src"
-                               (or platform (get-platform-name)) )
+                               (or platform (get-platform-name)))
                            dist-suffix))
   (generate-tgz src-dir tgz-path
                 dir-name

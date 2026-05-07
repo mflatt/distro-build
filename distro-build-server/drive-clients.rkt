@@ -713,9 +713,6 @@
       (if (pair? installer-post-process)
           (~a " INSTALLER_POST_PROCESS_BASE64=" (q (pack-base64-strings installer-post-process)))
           "")
-      (if (pair? installer-post-process)
-          (~a " INSTALLER_POST_PROCESS_BASE64=" (q (pack-base64-strings installer-post-process)))
-          "")
       (if (hash? notarization-config)
           (~a " NOTARIZATION_CONFIG=" (q (~a "--notarization-config "
                                              (pack-base64-strings notarization-config))))
